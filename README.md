@@ -43,3 +43,22 @@ prodondev
 ```
 
 (For why this is necessary, see: https://confluence.slac.stanford.edu/spaces/ARD/pages/695784800/Prod-on-dev+setup)
+
+## Standalone solution (implemented)
+The requested standalone Qt application is implemented in `pv_viewer_app.py`.
+
+### What it includes
+1. A GUI window with all 4 PVs plotted at once using a 2x2 matplotlib subplot layout.
+2. Time range selection using start/end date-time pickers.
+3. A `Refresh` button that re-fetches data and redraws all plots.
+4. Full matplotlib navigation toolbar support for home, back/forward, pan, zoom, and save.
+
+### Install dependencies
+```bash
+pip install matplotlib numpy requests PyQt5
+```
+
+### Run
+```bash
+python pv_viewer_app.py
+```
