@@ -49,10 +49,10 @@ DEFAULT_HOURS_BACK = 8.0
 MAX_POINTS = 1000
 
 PV_DEFS = {
-    "GDET 241 — Pulse Energy (HXR)": ("GDET:FEE1:241:ENRC", "Energy (mJ)"),
     "GMD — Pulse Energy (SXR)": ("EM1K0:GMD:HPS:milliJoulesPerPulse", "Energy (mJ)"),
-    "QUAD IN20:121 — Magnet": ("QUAD:IN20:121:BCTRL", "Field (kG)"),
-    "BPM IN20:221 — X Position": ("BPMS:IN20:221:X", "Position (mm)"),
+    "XGMD — Pulse Energy (SXR)": ("EM2K0:XGMD:HPS:milliJoulesPerPulse", "Energy (mJ)"),
+    "GDET 241 — Pulse Energy (HXR)": ("GDET:FEE1:241:ENRC", "Energy (mJ)"),
+    "GDET 361 — Pulse Energy (HXR)": ("GDET:FEE1:361:ENRC", "Energy (mJ)"),
 }
 
 
