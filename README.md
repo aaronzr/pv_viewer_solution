@@ -2,6 +2,20 @@
 
 This notebook fetches archived (X)GMD and GDet data from the archive appliance and plots a single PV at a time. The widget in this notebook is interactive, allowing the user to zoom, pan, reset axis limits, and save the plot.
 
+## Standalone viewer
+
+This branch includes a standalone Qt/matplotlib viewer in `pv_viewer_app.py`.
+
+Run it from an environment that can reach the LCLS archive appliance:
+
+```bash
+python pv_viewer_app.py
+```
+
+The application defaults to the last 8 hours of data, displays all four PVs, and can switch to a single PV with the selector. Use the date/time fields to choose a range and `Refresh` to re-fetch data. The standard matplotlib toolbar provides home, back/forward, pan, zoom, and save controls; the same tools are also bound to `r`, left/right arrows, `p`, and `z`.
+
+Long returned series are downsampled to roughly 1000 points per PV to keep plotting responsive.
+
 ## Your assignment
 *Scenario:* We would like to develop this widget into a standalone **PyDM / PyQt
 application** that can be invoked through the LCLSHOME Launchpad. Your solution should:
