@@ -5,13 +5,13 @@ The notebook in this repo fetches archived (X)GMD and GDet data from the archive
 ## Environment setup
 One goal of this assignment is to demonstrate the advantage of local agents over cloud execution or copy/pasting code when working in specialized environments. This notebook queries the PV archiver, which only accepts requests from certain hosts. You may need to *tell* the agent (with either prompts or AGENTS.md) to run commands on the machine itself instead of a sandbox, and you'll need to approve (or auto-approve) the terminal commands it wants to run.
 
-To standardize the archiver behavior, you should run this notebook on `dev-srv09`:
+To standardize the archiver behavior, you should run this notebook on `dev-srv09`.
 ```
-ssh mcclogin
-ssh dev-srv09
+ssh -J mcclogin dev-srv09
 ```
+In VSCode, click "Connect to Host..." > "Add new SSH Host...", input `ssh -J mcclogin dev-srv09`
 
-Once there, add the following to the bottom of your `.bashrc`, and then `source .bashrc`:
+Once on `dev-srv09`, add the following to the bottom of your `.bashrc` and `source .bashrc`:
 
 ```
 # Source the production environment into the current shell.
