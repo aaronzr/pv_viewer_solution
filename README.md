@@ -1,6 +1,10 @@
-# PV Viewer — Workshop Starter Notebook
+# PV Viewer — Exercises for Agentic Coding Workshop
 
-This notebook fetches archived (X)GMD and GDet data from the archive appliance and plots a single PV at a time. The widget in this notebook is interactive, allowing the user to zoom, pan, reset axis limits, and save the plot. We will use coding agents to help us develop this notebook into a standalone **PyDM / PyQt application** that can be invoked through the LCLSHOME Launchpad.
+The notebook in this repo fetches archived (X)GMD and GDet data from the archive appliance and plots a single PV at a time. The `matplotlib` widget is interactive, allowing users to zoom, pan, reset axis limits, and save the plot. We will use coding agents to help us develop this notebook into a standalone **PyDM / PyQt application** that can be invoked through the LCLSHOME Launchpad.
+
+## Background
+
+
 
 ## Environment setup
 One goal of this assignment is to demonstrate the advantage of local agents over cloud execution or copy/pasting code when working in specialized environments. This notebook queries the PV archiver, which only accepts requests from certain hosts. You may need to *tell* the agent (with either prompts or AGENTS.md) to run commands on the machine itself, not its own sandbox, and you'll need to approve (or auto-approve) the terminal commands it wants to run.
