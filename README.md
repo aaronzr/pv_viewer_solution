@@ -2,14 +2,16 @@
 
 The notebook in this repo fetches archived (X)GMD and GDet data from the archive appliance and plots a single PV at a time. The `matplotlib` widget is interactive, allowing users to zoom, pan, reset axis limits, and save the plot. We will use coding agents to help us develop this notebook into a standalone **PyDM / PyQt application** that can be invoked through the LCLSHOME Launchpad.
 
-## Background
-
-
-
 ## Environment setup
-One goal of this assignment is to demonstrate the advantage of local agents over cloud execution or copy/pasting code when working in specialized environments. This notebook queries the PV archiver, which only accepts requests from certain hosts. You may need to *tell* the agent (with either prompts or AGENTS.md) to run commands on the machine itself, not its own sandbox, and you'll need to approve (or auto-approve) the terminal commands it wants to run.
+One goal of this assignment is to demonstrate the advantage of local agents over cloud execution or copy/pasting code when working in specialized environments. This notebook queries the PV archiver, which only accepts requests from certain hosts. You may need to *tell* the agent (with either prompts or AGENTS.md) to run commands on the machine itself instead of a sandbox, and you'll need to approve (or auto-approve) the terminal commands it wants to run.
 
-To standardize the archiver behavior, you should run this notebook on `dev-srv09`, add the following to the bottom of your `.bashrc`, and then `source .bashrc`:
+To standardize the archiver behavior, you should run this notebook on `dev-srv09`:
+```
+ssh mcclogin
+ssh dev-srv09
+```
+
+Once there, add the following to the bottom of your `.bashrc`, and then `source .bashrc`:
 
 ```
 # Source the production environment into the current shell.
@@ -20,9 +22,12 @@ prodondev() {
 
 prodondev
 ```
+You can rerun this step from the terminal at any time using 
 (For why this is necessary, see: https://confluence.slac.stanford.edu/spaces/ARD/pages/695784800/Prod-on-dev+setup)
 
-After loading this file, try running `pv_viewer.ipynb` using the system 
+Locate the system Python executable using `which python`, then open `pv_viewer.ipynb` and select the system Python as the kernel.
+
+Try running `pv_viewer.ipynb`, and you should see the interactive plot as the output of the last cell.
 
 
 ## Module 1: Copilot
