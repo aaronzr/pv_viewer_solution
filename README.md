@@ -3,7 +3,7 @@
 The notebook in this repo fetches archived (X)GMD and GDet data from the archive appliance and plots a single PV at a time. The `matplotlib` widget is interactive, allowing users to zoom, pan, reset axis limits, and save the plot. We will use coding agents to help us develop this notebook into a standalone **PyDM / PyQt application** that can be invoked through the LCLSHOME Launchpad.
 
 ## Environment setup
-One goal of this assignment is to demonstrate the advantage of local agents over cloud execution or copy/pasting code when working in specialized environments. This notebook queries the PV archiver, which only accepts requests from certain hosts. You may need to *tell* the agent (with either prompts or AGENTS.md) to run commands on the machine itself instead of a sandbox, and you'll need to approve (or auto-approve) the terminal commands it wants to run.
+One goal of this assignment is to demonstrate the advantage of agents that can interact with the local filesystem through the shell. The PV archiver only accepts requests from certain hosts such as `lcls-srv01` and `dev-srv09`, so we will need to `ssh` onto `dev-srv09` and run the agents there. 
 
 To standardize the archiver behavior, you should run this notebook on `dev-srv09`.
 ```
@@ -29,6 +29,7 @@ Locate the system Python executable using `which python`, then open `pv_viewer.i
 
 Try running `pv_viewer.ipynb`, and you should see the interactive plot as the output of the last cell.
 
+> **Tip:** You may need to instruct the agent (with either prompts or AGENTS.md) to run commands on the machine itself instead of in a sandbox, and you'll need to approve (or auto-approve) the terminal commands it wants to run.
 
 ## Module 1: Copilot
 
