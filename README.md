@@ -2,6 +2,9 @@
 
 The notebook in this repo fetches archived (X)GMD and GDet data from the archive appliance and plots a single PV at a time. The `matplotlib` widget is interactive, allowing users to zoom, pan, reset axis limits, and save the plot. We will use coding agents to help us develop this notebook into a standalone **PyDM / PyQt application** that can be invoked through the LCLSHOME Launchpad.
 
+# Important!!!
+Do NOT show the agent this repo! Clone this one and spin up the agents here: https://github.com/aaronzr/pv_viewer
+
 ## Background
 
 LCLS produces X-ray pulses on two undulator lines:
