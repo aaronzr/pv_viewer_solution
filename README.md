@@ -16,26 +16,32 @@ Each line has gas-based detectors that measure **pulse energy** non-destructivel
 ### GDET (Gas Detector) — HXR line
 - Located in the **FEE** (Front End Enclosure) upstream of the HXR hutches.
 - Measures pulse energy by detecting fluorescence from nitrogen gas excited by the X-ray beam.
-- There are two GDETs for redundancy: **GDET:FEE1:241** and **GDET:FEE1:242**.
+- There are multiple GDETs at different positions along the beamline: **GDET:FEE1:241** is upstream, **GDET:FEE1:361** is downstream. Comparing the two gives a measure of transmission losses between them.
 - PV suffix `:ENRC` gives the calibrated pulse energy.
 - **Units: millijoules (mJ)**
 
-### GMD / XGMD (Gas Monitor Detector) — SXR line
+### GMD (Gas Monitor Detector) — SXR line
 - Located at the **EM1K0** position on the SXR beamline.
 - Measures pulse energy via photoionization of a rare gas (typically xenon or krypton); ion and electron currents are collected to determine the photon flux.
-- The **XGMD** (X-ray Gas Monitor Detector) is the upgraded DESY-style variant with absolute calibration capability.
 - Key PV: `EM1K0:GMD:HPS:milliJoulesPerPulse`
+- **Units: millijoules per pulse (mJ)**
+
+### XGMD (X-ray Gas Monitor Detector) — SXR line
+- Located at the **EM2K0** position, downstream of the GMD on the SXR beamline.
+- An upgraded DESY-style variant of the GMD with absolute calibration capability and higher dynamic range.
+- Key PV: `EM2K0:XGMD:HPS:milliJoulesPerPulse`
 - **Units: millijoules per pulse (mJ)**
 
 ### Summary of PVs used in this viewer
 
 | PV | Detector | Beamline | Units |
 |----|----------|----------|-------|
-| `GDET:FEE1:241:ENRC` | Gas Detector 241 | HXR | mJ |
-| `GDET:FEE1:242:ENRC` | Gas Detector 242 | HXR | mJ |
 | `EM1K0:GMD:HPS:milliJoulesPerPulse` | Gas Monitor Detector | SXR | mJ |
+| `EM2K0:XGMD:HPS:milliJoulesPerPulse` | X-ray Gas Monitor Detector | SXR | mJ |
+| `GDET:FEE1:241:ENRC` | Gas Detector 241 (upstream) | HXR | mJ |
+| `GDET:FEE1:361:ENRC` | Gas Detector 361 (downstream) | HXR | mJ |
 
-All three report single-shot pulse energy in millijoules. Typical LCLS pulse energies range from ~0.1 to ~5 mJ depending on machine configuration and photon energy.
+All four report single-shot pulse energy in millijoules. Typical LCLS pulse energies range from ~0.1 to ~5 mJ depending on machine configuration and photon energy.
 
 ## Environment setup
 One goal of this assignment is to demonstrate the advantage of agents that can interact with the local filesystem through the shell. The PV archiver only accepts requests from certain hosts such as `lcls-srv01` and `dev-srv09`, so we will need to `ssh` onto `dev-srv09` and run the agents there. 
