@@ -4,7 +4,38 @@ The notebook in this repo fetches archived (X)GMD and GDet data from the archive
 
 ## Background
 
-TODO: explain GMD, XGMD, GDET PVs, units, measure pulse energy, HXR vs. SXR
+LCLS produces X-ray pulses on two undulator lines:
+
+| Line | Name | Photon energy range |
+|------|------|---------------------|
+| **HXR** | Hard X-Ray | ~2–25 keV |
+| **SXR** | Soft X-Ray | ~0.25–2 keV |
+
+Each line has gas-based detectors that measure **pulse energy** non-destructively (the beam passes through a low-pressure gas volume):
+
+### GDET (Gas Detector) — HXR line
+- Located in the **FEE** (Front End Enclosure) upstream of the HXR hutches.
+- Measures pulse energy by detecting fluorescence from nitrogen gas excited by the X-ray beam.
+- There are two GDETs for redundancy: **GDET:FEE1:241** and **GDET:FEE1:242**.
+- PV suffix `:ENRC` gives the calibrated pulse energy.
+- **Units: millijoules (mJ)**
+
+### GMD / XGMD (Gas Monitor Detector) — SXR line
+- Located at the **EM1K0** position on the SXR beamline.
+- Measures pulse energy via photoionization of a rare gas (typically xenon or krypton); ion and electron currents are collected to determine the photon flux.
+- The **XGMD** (X-ray Gas Monitor Detector) is the upgraded DESY-style variant with absolute calibration capability.
+- Key PV: `EM1K0:GMD:HPS:milliJoulesPerPulse`
+- **Units: millijoules per pulse (mJ)**
+
+### Summary of PVs used in this viewer
+
+| PV | Detector | Beamline | Units |
+|----|----------|----------|-------|
+| `GDET:FEE1:241:ENRC` | Gas Detector 241 | HXR | mJ |
+| `GDET:FEE1:242:ENRC` | Gas Detector 242 | HXR | mJ |
+| `EM1K0:GMD:HPS:milliJoulesPerPulse` | Gas Monitor Detector | SXR | mJ |
+
+All three report single-shot pulse energy in millijoules. Typical LCLS pulse energies range from ~0.1 to ~5 mJ depending on machine configuration and photon energy.
 
 ## Environment setup
 One goal of this assignment is to demonstrate the advantage of agents that can interact with the local filesystem through the shell. The PV archiver only accepts requests from certain hosts such as `lcls-srv01` and `dev-srv09`, so we will need to `ssh` onto `dev-srv09` and run the agents there. 
@@ -99,11 +130,192 @@ After drafting, flag anything you are uncertain about that I should verify.
 ```
 
 ### 3.2
-Ask it to create the skill we described above, then test the skill. TODO: write tests for skill
+Ask it to create the skill we described above, then test the skill.
 
-## (Optional) Module 4: Advanced techniques
-We have taught the model how to do a specific skill, but the archiver itself can do much more, such as look up groups of PV names. 
+#### Testing the skill
 
-We will use git worktrees to do two things in parallel: (1) create an MCP server for the `meme` package, and (2) add a feature to our GUI.
+Once the skill files are created, verify the skill works end-to-end:
 
+1. **Check skill discovery** — Run `/skills` in Claude Code to confirm your new skill appears in the list.
 
+2. **Basic invocation** — Try prompts like:
+   ```
+   Plot GMD over the last 2 hours
+   ```
+   ```
+   Show me GDET pulse energy for the last 30 minutes
+   ```
+   The agent should produce a PNG file without asking you how to fetch or plot data.
+
+3. **Edge cases to test:**
+   - A PV that has no recent data (e.g., a device that's been off)
+   - Relative time strings: "last 5 minutes", "last 1 day"
+   - Requesting a PV not in the default set (the skill should still work if given a full PV name)
+
+4. **Verify output** — Open the saved PNG and confirm:
+   - The time axis matches the requested range
+   - Axis labels and title are present
+   - The file is saved in a predictable location (e.g., current directory or a specified output path)
+
+5. **Reproducibility** — Run the same prompt twice and confirm consistent behavior (same output location, same format).
+
+## (Optional) Module 4: Advanced techniques — MCP Server for MEME
+
+We have taught the model how to do a specific skill, but the archiver itself can do much more, such as look up groups of PV names. We will use git worktrees to do two things in parallel: (1) create an MCP server for the [`meme`](https://github.com/slaclab/meme) package, and (2) add a feature to our GUI.
+
+### Background: What is MEME?
+
+[MEME](https://github.com/slaclab/meme) (MAD EPICS MATLAB Environment) is a Python wrapper for SLAC's accelerator services. It provides three sub-modules:
+
+| Module | Purpose | Example |
+|--------|---------|---------|
+| `meme.archive` | Fetch archived PV history data | `meme.archive.get("GDET:FEE1:241:ENRC", from_time="1 hour ago", to_time="now")` |
+| `meme.names` | Query the directory service for PV/device/element names | `meme.names.list_pvs("BPMS:%:%:TMIT", tag="L2", sort_by="z")` |
+| `meme.model` | Get machine model data (R-matrices, Twiss parameters) | `Model("CU_HXR").get_rmat("BPMS:LI24:801")` |
+
+Dependencies: `p4p`, `numpy`, `pandas`, `requests`, `dateparser`
+
+### 4.1 Creating the MCP Server
+
+The goal is to expose MEME's functionality as an MCP (Model Context Protocol) server so that Claude Code (or any MCP client) can call MEME tools directly — searching for PV names, fetching archive data, or querying the machine model without you writing boilerplate each time.
+
+#### Step 1: Set up a worktree
+
+```bash
+git worktree add -b mcp-server .claude/worktrees/mcp-server
+cd .claude/worktrees/mcp-server
+```
+
+Or in Claude Code:
+```
+Create a worktree called mcp-server and work there.
+```
+
+#### Step 2: Prompt Claude Code to scaffold the server
+
+```
+Create an MCP server that wraps the `meme` Python package (https://github.com/slaclab/meme).
+The server should expose these tools:
+
+1. **list_pvs** — Search for PV names using a pattern (Oracle wildcard or regex).
+   Parameters: pattern (str, required), tag (str, optional), sort_by (str, optional)
+   Wraps: meme.names.list_pvs()
+
+2. **list_devices** — Search for device names using a pattern.
+   Parameters: pattern (str, required), tag (str, optional), sort_by (str, optional)
+   Wraps: meme.names.list_devices()
+
+3. **get_archive_data** — Fetch historical PV data from the archiver.
+   Parameters: pv (str or list, required), from_time (str, required), to_time (str, default "now")
+   Wraps: meme.archive.get()
+
+4. **get_archive_dataframe** — Fetch historical PV data as a pandas DataFrame (returned as JSON).
+   Parameters: pv (str or list, required), from_time (str, required), to_time (str, default "now")
+   Wraps: meme.archive.get_dataframe()
+
+5. **get_rmat** — Get the R-matrix for a beamline element.
+   Parameters: element (str, required), model_name (str, default "CU_HXR"), model_source (str, default "BMAD")
+   Wraps: meme.model.Model().get_rmat()
+
+6. **get_twiss** — Get Twiss parameters for a beamline element.
+   Parameters: element (str, required), model_name (str, default "CU_HXR"), model_source (str, default "BMAD")
+   Wraps: meme.model.Model().get_twiss()
+
+Use the `mcp` Python SDK (pip install mcp) with the FastMCP pattern.
+The server should run via stdio transport.
+Include error handling that returns descriptive messages when MEME calls fail.
+```
+
+#### Step 3: Expected server structure
+
+The agent should produce something like:
+
+```
+mcp_meme_server/
+├── server.py          # FastMCP server with tool definitions
+├── pyproject.toml     # Package metadata and dependencies
+└── README.md          # Usage instructions
+```
+
+A minimal tool implementation looks like:
+
+```python
+from mcp.server.fastmcp import FastMCP
+import meme.names
+import meme.archive
+
+mcp = FastMCP("meme")
+
+@mcp.tool()
+def list_pvs(pattern: str, tag: str | None = None, sort_by: str | None = None) -> list[str]:
+    """Search the MEME directory service for PV names matching a pattern.
+    
+    Pattern uses Oracle-style wildcards (% as wildcard) or regex.
+    Common tags: L1, L2, L3, BSY, LTU, UND, DUMPLINE.
+    """
+    return meme.names.list_pvs(pattern, tag=tag, sort_by=sort_by)
+```
+
+#### Step 4: Register the MCP server with Claude Code
+
+Add the server to your Claude Code settings (`.claude/settings.json` or project-level):
+
+```json
+{
+  "mcpServers": {
+    "meme": {
+      "command": "python",
+      "args": ["mcp_meme_server/server.py"],
+      "env": {}
+    }
+  }
+}
+```
+
+Or use `uv` if you set up the server as a package:
+```json
+{
+  "mcpServers": {
+    "meme": {
+      "command": "uv",
+      "args": ["run", "--directory", "mcp_meme_server", "server.py"]
+    }
+  }
+}
+```
+
+#### Step 5: Test the MCP server
+
+1. **Verify server starts** — Run the server directly to check for import errors:
+   ```bash
+   python mcp_meme_server/server.py
+   ```
+   (It should block waiting for stdio input — Ctrl+C to exit.)
+
+2. **Test via Claude Code** — Restart Claude Code, then try:
+   ```
+   Use the meme tools to find all BPM PVs in the LTU region, sorted by z position.
+   ```
+   Claude should call your `list_pvs` tool with `pattern="BPMS:%", tag="LTU", sort_by="z"`.
+
+3. **Test archive retrieval:**
+   ```
+   Use meme to fetch GDET:FEE1:241:ENRC data from the last hour and summarize the statistics.
+   ```
+
+4. **Test error handling:**
+   ```
+   Use meme to fetch data for FAKE:PV:NAME from the last hour.
+   ```
+   Should return a helpful error message, not a traceback.
+
+### 4.2 Adding a GUI feature (parallel work)
+
+While the MCP server is being built in one worktree, use another worktree (or the main branch) to add a feature to the PV viewer GUI — for example, a PV search dialog that could eventually connect to the MCP server's `list_pvs` tool.
+
+### Important notes
+
+- **Network access**: The MEME services require PVAccess (p4p) network connectivity. The `meme.archive` module also supports HTTP mode via the LCLS archiver appliance (`lcls-archapp.slac.stanford.edu`). Run from `dev-srv09` or a host with PVA access.
+- **Model paths**: Valid model paths are `CU_HXR`, `CU_SXR`, `CU_SPEC`, `SC_DIAG0`, `SC_BSYD`, `SC_HXR`, `SC_SXR`, `FACET2E`. FACET2E requires `model_source="LUCRETIA"`.
+- **Time strings**: `meme.archive.get()` accepts human-readable strings like `"1 hour ago"`, `"now"`, `"2 days ago"` (parsed by `dateparser`), or Python `datetime` objects.
+- **Wildcard syntax**: The names service uses `%` as the wildcard character (Oracle style), e.g., `BPMS:%:%:X`. It also accepts regex patterns like `(XCOR|BPMS):.*`.
