@@ -65,7 +65,7 @@ If you quickly accomplish the above and have time to spare, you may try adding a
 
 ## Module 2: Claude Code
 
-Let's add real-time plotting functionality to our application. We will switch backends from `matplotlib` to (`PyQtGraph`)[https://www.pyqtgraph.org/], which supports real-time plotting natively. We will use Claude Code to port our GUI from one plotting backend to the other.
+Let's add real-time plotting functionality to our application. We will switch backends from `matplotlib` to [PyQtGraph](https://www.pyqtgraph.org/), which supports real-time plotting natively. We will use Claude Code to port our GUI from one plotting backend to the other.
 
 Your solution should:
 1. Migrate the plotting plugin from matplotlib to PyQtGraph.
