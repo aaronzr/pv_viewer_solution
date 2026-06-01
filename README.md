@@ -2,6 +2,9 @@
 
 The notebook in this repo fetches archived (X)GMD and GDet data from the archive appliance and plots a single PV at a time. The `matplotlib` widget is interactive, allowing users to zoom, pan, reset axis limits, and save the plot. We will use coding agents to help us develop this notebook into a standalone **PyDM / PyQt application** that can be invoked through the LCLSHOME Launchpad.
 
+# Important!!!
+Do NOT show the agent this repo! Clone this one and spin up the agents here: https://github.com/aaronzr/pv_viewer
+
 ## Background
 
 LCLS produces X-ray pulses on two undulator lines:
@@ -13,27 +16,6 @@ LCLS produces X-ray pulses on two undulator lines:
 
 Each line has gas-based detectors that measure **pulse energy** non-destructively (the beam passes through a low-pressure gas volume):
 
-### GDET (Gas Detector) — HXR line
-- Located in the **FEE** (Front End Enclosure) upstream of the HXR hutches.
-- Measures pulse energy by detecting fluorescence from nitrogen gas excited by the X-ray beam.
-- There are multiple GDETs at different positions along the beamline: **GDET:FEE1:241** is upstream, **GDET:FEE1:361** is downstream. Comparing the two gives a measure of transmission losses between them.
-- PV suffix `:ENRC` gives the calibrated pulse energy.
-- **Units: millijoules (mJ)**
-
-### GMD (Gas Monitor Detector) — SXR line
-- Located at the **EM1K0** position on the SXR beamline.
-- Measures pulse energy via photoionization of a rare gas (typically xenon or krypton); ion and electron currents are collected to determine the photon flux.
-- Key PV: `EM1K0:GMD:HPS:milliJoulesPerPulse`
-- **Units: millijoules per pulse (mJ)**
-
-### XGMD (X-ray Gas Monitor Detector) — SXR line
-- Located at the **EM2K0** position, downstream of the GMD on the SXR beamline.
-- An upgraded DESY-style variant of the GMD with absolute calibration capability and higher dynamic range.
-- Key PV: `EM2K0:XGMD:HPS:milliJoulesPerPulse`
-- **Units: millijoules per pulse (mJ)**
-
-### Summary of PVs used in this viewer
-
 | PV | Detector | Beamline | Units |
 |----|----------|----------|-------|
 | `EM1K0:GMD:HPS:milliJoulesPerPulse` | Gas Monitor Detector | SXR | mJ |
@@ -41,17 +23,19 @@ Each line has gas-based detectors that measure **pulse energy** non-destructivel
 | `GDET:FEE1:241:ENRC` | Gas Detector 241 (upstream) | HXR | mJ |
 | `GDET:FEE1:361:ENRC` | Gas Detector 361 (downstream) | HXR | mJ |
 
-All four report single-shot pulse energy in millijoules. Typical LCLS pulse energies range from ~0.1 to ~5 mJ depending on machine configuration and photon energy.
+All four report single-shot pulse energy in millijoules. 
 
 ## Environment setup
 One goal of this assignment is to demonstrate the advantage of agents that can interact with the local filesystem through the shell. The PV archiver only accepts requests from certain hosts such as `lcls-srv01` and `dev-srv09`, so we will need to `ssh` onto `dev-srv09` and run the agents there. 
 
+### Host (SSH)
 To standardize the archiver behavior, you should run this notebook on `dev-srv09`.
 ```
 ssh -J mcclogin dev-srv09
 ```
 In VSCode, click "Connect to Host..." > "Add new SSH Host...", input `ssh -J mcclogin dev-srv09`
 
+### Shell / environment variables
 Once on `dev-srv09`, add the following to the bottom of your `.bashrc` and `source .bashrc`:
 
 ```
@@ -63,14 +47,21 @@ prodondev() {
 
 prodondev
 ```
-You can rerun this step from the terminal at any time using 
+You can rerun this step from the terminal at any time by running `prodondev`.
 (For why this is necessary, see: https://confluence.slac.stanford.edu/spaces/ARD/pages/695784800/Prod-on-dev+setup)
 
-Locate the system Python executable using `which python`, then open `pv_viewer.ipynb` and select the system Python as the kernel.
+### Python
+After sourcing the prod-on-dev setup, locate the system Python executable using `which python`, then open `pv_viewer.ipynb` and select the system Python as the kernel.
 
-Try running `pv_viewer.ipynb`, and you should see the interactive plot as the output of the last cell.
+Try running `pv_viewer.ipynb`, and you should see the interactive plot as the output of the last cell. If nothing shows up, the requested device was not recording data; try changing the index, e.g.
+```
+fig = plot_pv(list(PV_DEFS.keys())[3], hours_back=4.0)
+```
 
-> **Tip:** You may need to instruct the agent (with either prompts or AGENTS.md) to run commands on the machine itself instead of in a sandbox, and you'll need to approve (or auto-approve) the terminal commands it wants to run.
+> **Tip:** At some point you may need to instruct the agent (with either prompts or AGENTS.md) to run commands on the machine itself instead of in a sandbox, and you'll need to approve (or auto-approve) the terminal commands it wants to run.
+
+### FastX
+We will be building a GUI, so it will be nice to see the work in progress. If you don't already have FastX installed, follow these instructions: https://it.slac.stanford.edu/support/KB0012877#mcetoc_1i6g8b27k91. You may also use FastX in the browser instead of downloading it.
 
 ## Module 1: Copilot
 
@@ -82,13 +73,18 @@ Your solution should:
 3. Have a *Refresh* button that re-fetches and redraws the data.
 4. Preserve the interactive features of the widget: home (reset axes), forward/back, pan, zoom, save figure.
 
-Use FastX to 
+Use FastX to inspect the results and iterate.
 
 > **Tip:** Start by asking the agent to read this notebook and explain what each piece does,
 > then ask it to scaffold a PyDM `Display` (or a plain PyQt `QWidget`) around the same logic.
 
 ### (Optional) 1.2
 If you quickly accomplish the above and have time to spare, you may try adding a few of these extra features:
+
+> **Tip:** Adding these all at once may be more token-efficient, but incremental development makes things easier to debug when the agent gets something wrong. 
+
+> **Tip:** _Test-driven development_ means every time you add a feature, you add a test to ensure you don't break that feature in the future. You can explicitly instruct the agent to add a test for each new feature, or (later) add a skill that describes TDD: https://agent-knowledge-hub.slac.stanford.edu/skills/tdd-standards 
+
 1. When opened, have the viewer default to fetching and plotting the last 8 hours of data.
 2. Allow the user to switch between viewing a single PV and all PVs on the canvas. 
 3. Include hotkeys for the widget controls above. E.g. `z` to toggle zoom mode, `p` to toggle pan, `r` to reset, left and right arrow keys to go back or forward between views.
@@ -112,15 +108,15 @@ Your solution should:
    * The plot should adjust its x-limits and incorporate new data every refresh interval.
    * Optional: add a checkbox to set whether the start time is held fixed or rolls with the updating end time.
 
-> **Tip:** Claude Code will likely create _subagents_, starting with a Plan agent. Notice what they're doing.
+Claude Code will likely create _subagents_, starting with a **Plan** or **Explore** agent, as it works through this task. Notice what they're doing -- usually fetching and reading webpages (**Fetch**), running shell commands (**Bash**), or writing code (**Write**).
+
+> **Tip:** If you get tired of approving shell commands every 20 seconds, Ctrl-C out of Claude Code and relaunch as `claude --dangerously-skip-permissions`
 
 ## Module 3: Modifying Agent Behavior
 
-Say we're in the ACR and we need to quickly record a snapshot of pulse energies over some time span. We would like to be able to ask an agent to do this on the fly using a prompt like "Plot GMD over the last 2 hours" and have it spit out a PNG that we can upload to the ELOG.
+### 3.1 AGENTS.md
 
-Instead of making the agent figure out how to do this from scratch each time, we can define a skill (using both `.md` and `.py` files) that makes the behavior reproducible and easy to trigger.
-
-### 3.1
+AGENTS.md saves AI agents from having to figure out the codebase from scratch at each invocation.
 
 Prompt Claude Code to create an AGENTS.md for the repo:
 
@@ -135,8 +131,11 @@ Draft an AGENTS.md for this repository. Include:
 After drafting, flag anything you are uncertain about that I should verify.
 ```
 
-### 3.2
-Ask it to create the skill we described above, then test the skill.
+### 3.2 SKILLS.md
+
+Suppose we're in the ACR and we need to quickly record a snapshot of pulse energies over some time span. We can ask an agent to do this on the fly: "Plot GMD over the last 2 hours" and have it spit out a PNG that we can upload to the ELOG.
+
+Instead of making the agent figure out how to do this from scratch each time, we can define a skill (using both `.md` and `.py` files) that makes the behavior reproducible and easy to trigger.
 
 #### Testing the skill
 
@@ -153,21 +152,15 @@ Once the skill files are created, verify the skill works end-to-end:
    ```
    The agent should produce a PNG file without asking you how to fetch or plot data.
 
-3. **Edge cases to test:**
-   - A PV that has no recent data (e.g., a device that's been off)
-   - Relative time strings: "last 5 minutes", "last 1 day"
-   - Requesting a PV not in the default set (the skill should still work if given a full PV name)
-
 4. **Verify output** — Open the saved PNG and confirm:
    - The time axis matches the requested range
    - Axis labels and title are present
    - The file is saved in a predictable location (e.g., current directory or a specified output path)
 
-5. **Reproducibility** — Run the same prompt twice and confirm consistent behavior (same output location, same format).
 
 ## (Optional) Module 4: Advanced techniques — MCP Server for MEME
 
-We have taught the model how to do a specific skill, but the archiver itself can do much more, such as look up groups of PV names. We will use git worktrees to do two things in parallel: (1) create an MCP server for the [`meme`](https://github.com/slaclab/meme) package, and (2) add a feature to our GUI.
+We have taught the model a specific skill, but the archiver itself can do much more, such as look up groups of PV names. We will use git worktrees to do two things in parallel: (1) create an MCP server for the [`meme`](https://github.com/slaclab/meme) package, and (2) add a feature to our GUI.
 
 ### Background: What is MEME?
 
@@ -325,3 +318,6 @@ While the MCP server is being built in one worktree, use another worktree (or th
 - **Model paths**: Valid model paths are `CU_HXR`, `CU_SXR`, `CU_SPEC`, `SC_DIAG0`, `SC_BSYD`, `SC_HXR`, `SC_SXR`, `FACET2E`. FACET2E requires `model_source="LUCRETIA"`.
 - **Time strings**: `meme.archive.get()` accepts human-readable strings like `"1 hour ago"`, `"now"`, `"2 days ago"` (parsed by `dateparser`), or Python `datetime` objects.
 - **Wildcard syntax**: The names service uses `%` as the wildcard character (Oracle style), e.g., `BPMS:%:%:X`. It also accepts regex patterns like `(XCOR|BPMS):.*`.
+
+
+https://i.programmerhumor.io/2026/05/5e33ce843c037cc9ea9535b9d45d740fd21d7b26bb71da9cc74df87608957149.png 
